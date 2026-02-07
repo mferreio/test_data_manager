@@ -1,8 +1,11 @@
 from fastapi import FastAPI, Depends, HTTPException, Query
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
 from fastapi.middleware.cors import CORSMiddleware
+from pathlib import Path
 
 from . import models, schemas, database, config
 
@@ -10,12 +13,15 @@ models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI(title="TDM - Test Data Management")
 
+# Define frontend path
+FRONTEND_PATH = Path(__file__).parent.parent / "frontend"
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Dependency
@@ -180,3 +186,7 @@ def get_settings():
 def update_settings(settings: config.Settings):
     config.save_settings(settings)
     return settings
+
+# Serve static files from the frontend directory
+# This MUST be the last route/mount to avoid overlapping with API endpoints
+app.mount("/", StaticFiles(directory=FRONTEND_PATH, html=True), name="static")
