@@ -5,7 +5,7 @@ services:
   # Backend API (FastAPI)
   - type: web
     name: tdm-api
-    env: python
+    runtime: python
     region: oregon
     plan: free
     buildCommand: pip install -r requirements.txt
@@ -19,7 +19,6 @@ services:
   - type: web
     name: tdm-frontend
     env: static
-    region: oregon
     plan: free
     buildCommand: echo "No build needed"
     staticPublishPath: ./frontend
@@ -31,9 +30,3 @@ services:
       - path: /*
         name: Cache-Control
         value: public, max-age=0, must-revalidate
-    envVars:
-      - key: API_URL
-        fromService:
-          name: tdm-api
-          type: web
-          property: host
