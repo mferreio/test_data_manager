@@ -42,10 +42,10 @@ class TDMClient:
         
         Args:
             api_url: URL da API. Se não fornecida, usa a variável de ambiente 
-                     TDM_API_URL ou localhost:8000 como fallback.
+                     TDM_API_URL ou https://tdm-api-vn0v.onrender.com como fallback.
             timeout: Timeout para requisições em segundos.
         """
-        self.api_url = api_url or os.getenv("TDM_API_URL", "http://127.0.0.1:8000")
+        self.api_url = api_url or os.getenv("TDM_API_URL", "https://tdm-api-vn0v.onrender.com")
         self.timeout = timeout
         self._session = requests.Session()
     

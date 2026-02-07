@@ -27,7 +27,7 @@ from tdm_client import TDMClient, TDMMassaContext
 # ==================== CONFIGURAÇÃO ====================
 
 # URL da API TDM (altere para seu deploy no Render)
-TDM_API_URL = os.getenv("TDM_API_URL", "http://127.0.0.1:8000")
+TDM_API_URL = os.getenv("TDM_API_URL", "https://tdm-api-vn0v.onrender.com")
 
 # URL do sistema sendo testado
 TARGET_URL = os.getenv("TARGET_URL", "https://seu-sistema.com")

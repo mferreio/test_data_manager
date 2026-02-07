@@ -90,8 +90,8 @@ uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
 ### Após o Deploy
 
 Sua aplicação estará disponível em:
-- API: `https://tdm-api.onrender.com`
-- Frontend: `https://tdm-frontend.onrender.com`
+- API: `https://tdm-api-vn0v.onrender.com`
+- Frontend: `https://tdm-api-vn0v.onrender.com`
 
 ⚠️ **Nota:** No plano gratuito, o serviço "dorme" após 15 minutos de inatividade. A primeira requisição pode demorar ~30s.
 
@@ -111,7 +111,7 @@ pip install requests
 
 ```python
 import os
-os.environ["TDM_API_URL"] = "https://seu-app.onrender.com"
+os.environ["TDM_API_URL"] = "https://tdm-api-vn0v.onrender.com"
 ```
 
 ### Uso Básico
@@ -120,7 +120,7 @@ os.environ["TDM_API_URL"] = "https://seu-app.onrender.com"
 from tdm_client import TDMClient
 
 # Inicializar cliente
-tdm = TDMClient("https://seu-app.onrender.com")
+tdm = TDMClient("https://tdm-api-vn0v.onrender.com")
 
 # Buscar e reservar massa CPF
 massa = tdm.get_available_massa(doc_type="CPF")
@@ -141,7 +141,7 @@ if massa:
 from selenium import webdriver
 from tdm_client import TDMClient
 
-tdm = TDMClient("https://seu-app.onrender.com")
+tdm = TDMClient("https://tdm-api-vn0v.onrender.com")
 driver = webdriver.Chrome()
 
 # Buscar massa
@@ -221,10 +221,10 @@ def test_login(driver, massa_cpf):
 
 ```bash
 # Buscar massas disponíveis
-curl "https://seu-app.onrender.com/massas?status=AVAILABLE&document_type=CPF"
+curl "https://tdm-api-vn0v.onrender.com/massas?status=AVAILABLE&document_type=CPF"
 
 # Atualizar status
-curl -X PUT "https://seu-app.onrender.com/massas/1" \
+curl -X PUT "https://tdm-api-vn0v.onrender.com/massas/1" \
   -H "Content-Type: application/json" \
   -d '{"status": "IN_USE"}'
 ```
