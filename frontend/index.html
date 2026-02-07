@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeoGestão - TDM</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar" style="position: relative;">
+            <div class="logo">
+                <i data-lucide="database"></i>
+                <span class="logo-text">TDManager</span>
+            </div>
+
+            <nav>
+                <a href="#" class="nav-item active" id="nav-massas" onclick="switchView('massas')">
+                    <i data-lucide="table-2"></i>
+                    <span class="nav-text">Massas</span>
+                </a>
+                <a href="#" class="nav-item" id="nav-dashboard" onclick="switchView('dashboard')">
+                    <i data-lucide="layout-dashboard"></i>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" onclick="openModal()">
+                    <i data-lucide="plus-circle"></i>
+                    <span class="nav-text">Adicionar</span>
+                </a>
+                <a href="#" class="nav-item" onclick="openAdminModal()">
+                    <i data-lucide="settings"></i>
+                    <span class="nav-text">Admin</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <label for="csv-upload"
+                        style="cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%;">
+                        <i data-lucide="upload-cloud"></i>
+                        <span class="nav-text">Importar CSV</span>
+                    </label>
+                    <input type="file" id="csv-upload" accept=".csv, .xlsx, .xls" style="display: none;"
+                        onchange="handleFileUpload(event)">
+                </a>
+            </nav>
+
+            <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Recolher Sidebar">
+                <i data-lucide="chevron-left"></i>
+            </button>
+
+            <div class="sidebar-footer">
+                <p>Versão 1.0.0</p>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-bar">
+                <h1>Controle de Massas</h1>
+                <div class="header-actions">
+                    <button class="btn btn-secondary btn-icon-only" onclick="exportToCSV()" title="Exportar CSV">
+                        <i data-lucide="download"></i>
+                    </button>
+                    <button class="btn btn-secondary btn-icon-only"
+                        onclick="document.getElementById('csv-file-input').click()" title="Importar CSV">
+                        <i data-lucide="upload"></i>
+                    </button>
+                    <button class="btn btn-secondary btn-icon-only" onclick="fetchMassas()" title="Atualizar">
+                        <i data-lucide="refresh-cw"></i>
+                    </button>
+                    <button id="selection-mode-btn" class="btn btn-secondary btn-icon-only"
+                        onclick="toggleSelectionMode()" title="Modo de Seleção">
+                        <i data-lucide="list-checks"></i>
+                    </button>
+                    <button class="btn btn-secondary btn-icon-only" onclick="toggleColumnsModal()"
+                        title="Gerenciar Colunas">
+                        <i data-lucide="columns"></i>
+                    </button>
+                    <button class="btn btn-primary" onclick="openModal()">
+                        <i data-lucide="plus"></i> Nova Massa
+                    </button>
+                </div>
+            </header>
+
+            <!-- View Dashboard (Hidden by default or separate) -->
+            <div id="view-dashboard" style="display: none;">
+                <!-- Dashboard Summary -->
+                <div class="dashboard-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(130, 87, 229, 0.1); color: var(--primary);">
+                            <i data-lucide="database"></i>
+                        </div>
+                        <div>
+                            <h3>Total</h3>
+                            <p id="dash-total">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(4, 211, 97, 0.1); color: var(--success);">
+                            <i data-lucide="check-circle"></i>
+                        </div>
+                        <div>
+                            <h3>Disponíveis</h3>
+                            <p id="dash-available">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(247, 90, 104, 0.1); color: var(--danger);">
+                            <i data-lucide="alert-circle"></i>
+                        </div>
+                        <div>
+                            <h3>Vencidas</h3>
+                            <p id="dash-overdue">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(255, 205, 30, 0.1); color: var(--warning);">
+                            <i data-lucide="clock"></i>
+                        </div>
+                        <div>
+                            <h3>Em Uso</h3>
+                            <p id="dash-inuse">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="dashboard-grid"
+                    style="grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); margin-top: 20px;">
+                    <div class="stat-card" style="display: block; height: auto; min-height: 350px;">
+                        <h3 style="margin-bottom: 5px;">Distribuição por Status</h3>
+                        <div
+                            style="position: relative; height: 250px; width: 100%; display: flex; justify-content: center;">
+                            <canvas id="chart-status"></canvas>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="display: block; height: auto; min-height: 350px;">
+                        <h3 style="margin-bottom: 5px;">Distribuição por Região</h3>
+                        <div style="position: relative; height: 250px; width: 100%;">
+                            <canvas id="chart-region"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 2 Charts -->
+                <div class="dashboard-grid"
+                    style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); margin-top: 20px;">
+                    <div class="stat-card" style="display: block; height: auto; min-height: 350px;">
+                        <h3 style="margin-bottom: 5px;">Por Tipo de Documento</h3>
+                        <div style="position: relative; height: 250px; width: 100%;">
+                            <canvas id="chart-doc-type"></canvas>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="display: block; height: auto; min-height: 350px;">
+                        <h3 style="margin-bottom: 5px;">Status UCs</h3>
+                        <div style="position: relative; height: 250px; width: 100%;">
+                            <canvas id="chart-uc"></canvas>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="display: block; height: auto; min-height: 350px;">
+                        <h3 style="margin-bottom: 5px;">Status Faturas</h3>
+                        <div style="position: relative; height: 250px; width: 100%;">
+                            <canvas id="chart-fat"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View Massas (Default Active) -->
+            <div id="view-massas">
+
+                <!-- Selection Mode Bar (hidden by default) -->
+                <div id="selection-bar" class="delete-bar"
+                    style="display: none; align-items: center; justify-content: space-between;">
+                    <span id="selected-count" style="font-weight: bold; margin-right: 20px;">0 selecionados</span>
+
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="performBulkAction('AVAILABLE')" class="btn-primary"
+                            style="background-color: var(--primary); border-color: var(--primary);">
+                            <i data-lucide="check-circle" style="width: 16px; height: 16px; margin-right: 5px;"></i>
+                            Disponível
+                        </button>
+                        <button onclick="performBulkAction('CONSUMED')" class="btn-primary"
+                            style="background-color: var(--warning); border-color: var(--warning); color: #121214;">
+                            <i data-lucide="x-circle" style="width: 16px; height: 16px; margin-right: 5px;"></i>
+                            Consumida
+                        </button>
+                        <button onclick="performBulkAction('DELETE')" class="btn-primary"
+                            style="background-color: var(--danger); border-color: var(--danger);">
+                            <i data-lucide="trash-2" style="width: 16px; height: 16px; margin-right: 5px;"></i> Excluir
+                        </button>
+                    </div>
+
+                    <button onclick="toggleSelectionMode()" class="btn-secondary" style="margin-left: auto;">
+                        Cancelar
+                    </button>
+                </div>
+
+                <input type="file" id="csv-file-input" accept=".csv,.xlsx,.xls" style="display: none"
+                    onchange="handleFileUpload(event)">
+
+
+                <section class="data-grid-section">
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>NOME</th>
+                                    <th>DOCUMENTO</th>
+                                    <th>Tipo</th>
+                                    <th>Região</th>
+                                    <th>Status TDM</th>
+                                    <th>Status UC</th>
+                                    <th>Faturas</th>
+                                    <th>Tags</th>
+                                    <th>Ações</th>
+                                </tr>
+                                <tr class="filter-row">
+                                    <th><input type="text" id="col-filter-id" placeholder="ID" style="width: 50px;"
+                                            onkeyup="applyColumnFilters()"></th>
+                                    <th><input type="text" id="col-filter-nome" placeholder="Nome..."
+                                            onkeyup="applyColumnFilters()"></th>
+                                    <th><input type="text" id="col-filter-doc" placeholder="Filtrar..."
+                                            onkeyup="applyColumnFilters()"></th>
+                                    <th>
+                                        <select id="col-filter-type" onchange="applyColumnFilters()">
+                                            <option value="">Todos</option>
+                                            <option value="CPF">CPF</option>
+                                            <option value="CNPJ">CNPJ</option>
+                                        </select>
+                                    </th>
+                                    <th>
+                                        <select id="col-filter-region" onchange="applyColumnFilters()">
+                                            <option value="">Todas</option>
+                                            <option value="Bahia">Bahia</option>
+                                            <option value="Brasília">Brasília</option>
+                                            <option value="Mato Grosso do Sul">Mato Grosso do Sul</option>
+                                            <option value="Pernambuco">Pernambuco</option>
+                                            <option value="Rio Grande do Norte">Rio Grande do Norte</option>
+                                            <option value="São Paulo">São Paulo</option>
+                                        </select>
+                                    </th>
+                                    <th>
+                                        <select id="col-filter-status" onchange="applyColumnFilters()">
+                                            <option value="">Todos</option>
+                                            <option value="AVAILABLE">Disponível</option>
+                                            <option value="IN_USE">Em Uso</option>
+                                            <option value="CONSUMED">Consumido</option>
+                                            <option value="BLOCKED">Bloqueado</option>
+                                        </select>
+                                    </th>
+                                    <th>
+                                        <select id="col-filter-uc" onchange="applyColumnFilters()">
+                                            <option value="">Todos</option>
+                                            <option value="TEM_LIGADA">Com Ligada</option>
+                                            <option value="TEM_DESLIGADA">Com Desligada</option>
+                                            <option value="TEM_SUSPENSA">Com Suspensa</option>
+                                        </select>
+                                    </th>
+                                    <th>
+                                        <select id="col-filter-faturas" onchange="applyColumnFilters()">
+                                            <option value="">Todos</option>
+                                            <option value="TEM_VENCIDA">Com Vencidas</option>
+                                            <option value="TEM_A_VENCER">Com A Vencer</option>
+                                            <option value="TEM_PAGA">Com Pagas</option>
+                                            <option value="TEM_BOLETO_UNICO">Boleto Único</option>
+                                            <option value="TEM_MULTIFATURAS">Multifaturas</option>
+                                            <option value="TEM_RENEGOCIACAO">Renegociação</option>
+                                        </select>
+                                    </th>
+                                    <th><input type="text" id="col-filter-tags" placeholder="Filtrar..."
+                                            onkeyup="applyColumnFilters()"></th>
+                                    <th><button class="btn btn-secondary btn-icon"
+                                            style="padding: 4px; width: 28px; height: 28px;"
+                                            onclick="clearColumnFilters()" title="Limpar Filtros"><i
+                                                data-lucide="x-circle" style="width: 16px; height: 16px;"></i></button>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body">
+                                <!-- Rows loaded via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div><!-- End View Massas -->
+        </main>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="edit-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Editar Massa</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-id">
+
+                <div class="tabs-header">
+                    <button class="tab-btn active" onclick="switchTab('tab-geral', this)">Geral</button>
+                    <button class="tab-btn" onclick="switchTab('tab-stats', this)">Status & Contadores</button>
+                    <button class="tab-btn" onclick="switchTab('tab-advanced', this)">Avançado</button>
+                </div>
+
+                <!-- Tab Geral -->
+                <div id="tab-geral" class="tab-content active">
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label>Nome</label>
+                            <input type="text" id="edit-nome">
+                        </div>
+                        <div class="input-group">
+                            <label>Tipo Documento</label>
+                            <select id="edit-doc-type">
+                                <option value="CPF">CPF</option>
+                                <option value="CNPJ">CNPJ</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Número Documento</label>
+                            <input type="text" id="edit-doc-number">
+                        </div>
+                        <div class="input-group">
+                            <label>Região</label>
+                            <select id="edit-region">
+                                <option value="Bahia">Bahia</option>
+                                <option value="Brasília">Brasília</option>
+                                <option value="Mato Grosso do Sul">Mato Grosso do Sul</option>
+                                <option value="Pernambuco">Pernambuco</option>
+                                <option value="Rio Grande do Norte">Rio Grande do Norte</option>
+                                <option value="São Paulo">São Paulo</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Status & Stats -->
+                <div id="tab-stats" class="tab-content">
+                    <h4 class="section-title">Status</h4>
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label>Status TDM</label>
+                            <select id="edit-status">
+                                <option value="AVAILABLE">Disponível</option>
+                                <option value="IN_USE">Em Uso</option>
+                                <option value="CONSUMED">Consumido</option>
+                                <option value="BLOCKED">Bloqueado</option>
+                            </select>
+                        </div>
+                        <div class="input-group" style="grid-column: span 2;">
+                            <label>Observação do Status</label>
+                            <input type="text" id="edit-status-comment"
+                                placeholder="Motivo ou detalhe sobre o status...">
+                        </div>
+                    </div>
+
+                    <h4 class="section-title">Contadores de UCs</h4>
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label>Ligadas</label>
+                            <input type="number" id="edit-uc-ligada" min="0" value="0">
+                        </div>
+                        <div class="input-group">
+                            <label>Desligadas</label>
+                            <input type="number" id="edit-uc-desligada" min="0" value="0">
+                        </div>
+                        <div class="input-group">
+                            <label>Suspensas</label>
+                            <input type="number" id="edit-uc-suspensa" min="0" value="0">
+                        </div>
+                    </div>
+
+                    <h4 class="section-title">Contadores de Faturas</h4>
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label>Vencidas</label>
+                            <input type="number" id="edit-fat-vencidas" min="0" value="0">
+                        </div>
+                        <div class="input-group">
+                            <label>A Vencer</label>
+                            <input type="number" id="edit-fat-a-vencer" min="0" value="0">
+                        </div>
+                        <div class="input-group">
+                            <label>Pagas</label>
+                            <input type="number" id="edit-fat-pagas" min="0" value="0">
+                        </div>
+                        <div class="input-group">
+                            <label>Boleto Único</label>
+                            <input type="number" id="edit-fat-boleto-unico" min="0" value="0">
+                        </div>
+                        <div class="input-group">
+                            <label>Multifaturas</label>
+                            <input type="number" id="edit-fat-multifaturas" min="0" value="0">
+                        </div>
+                        <div class="input-group">
+                            <label>Renegociação</label>
+                            <input type="number" id="edit-fat-renegociacao" min="0" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Advanced -->
+                <div id="tab-advanced" class="tab-content">
+                    <div class="input-group">
+                        <label>Tags (separadas por vírgula)</label>
+                        <input type="text" id="edit-tags" placeholder="ex: com_divida, baixa_renda">
+                    </div>
+                    <div class="input-group" style="margin-top: 15px;">
+                        <label>Metadados (JSON)</label>
+                        <textarea id="edit-metadata" rows="10"
+                            style="width: 100%; background: var(--bg-dark); border: 1px solid var(--border-color); color: var(--text-primary); padding: 10px; border-radius: 6px; font-family: monospace;"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+                    <button class="btn btn-primary" onclick="saveEdit()">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Admin Modal -->
+    <div id="admin-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Administração da Tabela</h3>
+                <button class="close-btn" onclick="closeAdminModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label>Adicionar Coluna</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="new-col-name" placeholder="Nome da Coluna" style="flex: 2;">
+                            <select id="new-col-type" style="flex: 1;">
+                                <option value="text">Texto</option>
+                                <option value="number">Número</option>
+                                <option value="date">Data</option>
+                                <option value="tag">Tag</option>
+                            </select>
+                            <button class="btn btn-primary" onclick="addCustomColumn()">Adicionar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <h4 class="section-title">Colunas Personalizadas</h4>
+                <div class="tags-container" id="custom-columns-list" style="margin-top: 10px;">
+                    <!-- Custom columns will act like tags here with X to delete -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>
