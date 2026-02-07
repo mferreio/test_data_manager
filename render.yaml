@@ -1,14 +1,10 @@
 # Render Deployment Configuration
-# Deploy apenas o backend (API + Frontend servido pelo FastAPI)
+# https://render.com/docs/blueprint-spec
 
 services:
   - type: web
     name: tdm-api
-    runtime: python
-    region: oregon
+    env: python
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
     healthCheckPath: /docs
