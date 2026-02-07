@@ -1,4 +1,9 @@
-const API_URL = 'http://127.0.0.1:8000'; // Adjust if running elsewhere
+// Dynamic API URL: 
+// If running on localhost/127.0.0.1, keep using port 8000
+// If running in production (Render), use relative path (empty string) because frontend is served by backend
+const isLocal = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost';
+const API_URL = isLocal ? 'http://127.0.0.1:8000' : '';
+
 
 // Store all massas for reference
 let allMassas = [];
